@@ -1,0 +1,11 @@
+#!/bin/bash
+###############################################################################
+# csf{{item.key}}.sh
+# Managed by Ansible, do not manually edit. Your changes will be lost.
+# Playbook: csf
+# Author: ALinuxNinja
+# URL: https://github.com/ALinuxNinja/ansible-csf
+###############################################################################
+{% for rule in item.value -%}
+{{rule}}
+{% endfor -%}

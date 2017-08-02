@@ -1,0 +1,13 @@
+###############################################################################
+# csf.{{item.key}}
+# Managed by Ansible, do not manually edit. Your changes will be lost.
+# Playbook: csf
+# Author: ALinuxNinja
+# URL: https://github.com/ALinuxNinja/ansible-csf
+###############################################################################
+{% for rule_set, rules in item.value.iteritems() -%}
+## Rule Set: {{rule_set}}
+{% for rule in rules -%}
+{{rule}}
+{% endfor -%}
+{%- endfor -%}

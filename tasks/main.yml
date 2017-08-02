@@ -1,0 +1,120 @@
+---
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+  tags: vars
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{packages}}"
+- name: install csf
+  shell: wget -O - "https://download.configserver.com/csf.tgz" | tar xzf - && cd csf && ./install.sh
+  args:
+    creates: /etc/csf
+- name: cleanup after install
+  file: 
+    path: csf
+    state: absent
+- name: get csf status
+  stat:
+    path: /etc/csf/csf.disable
+  register: csf_status
+- name: enable csf
+  command: csf -e
+  when: csf.enabled==True and csf_status.stat.exists
+- name: disable csf
+  command: csf -x
+  when: csf.enabled==False and not csf_status.stat.exists
+- name: configure main config (/etc/csf/csf.conf)
+  lineinfile:
+    path: /etc/csf/csf.conf
+    regexp: '^{{item.key}} ='
+    line: '{{item.key}} = "{{item.value}}"'
+  with_dict: "{{csf.conf}}"
+  notify: csf_reload
+- name: configure additional config files
+  template:
+    src: additional_config_file.j2
+    dest: /etc/csf/csf.{{item.key}}
+    owner: root
+    group: root
+    mode: 0700
+  with_dict: "{{csf.additional_conf}}"
+  notify: csf_reload
+- name: create csfpre script (/etc/csf/csfpre.sh)
+  copy:
+    src: "{{role_path}}/files/csfpre.sh"
+    dest: /etc/csf/csfpre.sh
+    owner: root
+    group: root
+    mode: 0700
+  notify: csf_reload
+- name: create csfpost script (/etc/csf/csfpost.sh)
+  copy:
+    src: "{{role_path}}/files/csfpost.sh"
+    dest: /etc/csf/csfpost.sh
+    owner: root
+    group: root
+    mode: 0700
+  notify: csf_reload
+- name: create status folder (/etc/csf/status)
+  file:
+    path: /etc/csf/status
+    state: directory
+    owner: root
+    mode: 0755
+- name: create folder for csfpre scripts (/etc/csf/csfpre.d)
+  file:
+    path: /etc/csf/csfpre.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+- name: create folder for csfpost scripts (/etc/csf/csfpost.d)
+  file:
+    path: /etc/csf/csfpost.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+- name: get list of csfpre scripts
+  shell: ls /etc/csf/csfpre.d/ | sed -n 's/\(.*\)\.sh$/\1/p'
+  register: csfpre_scripts
+- name: remove unreferenced csfpre scripts
+  file:
+    path: /etc/csf/csfpre.d/{{item}}.sh
+    state: absent
+  when: csf['scripts']['pre'][item] is not defined
+  with_items: "{{csfpre_scripts.stdout_lines}}"
+  notify: csf_reload
+- name: create csfpre scripts in /etc/csf/csfpre.d
+  template:
+    src: csf_script.j2
+    dest: /etc/csf/csfpre.d/{{item.key}}.sh
+    owner: root
+    group: root
+    mode: 0700
+  with_dict: "{{csf.scripts.pre}}"
+  notify: csf_reload
+- name: get list of csfpost scripts
+  shell: ls /etc/csf/csfpost.d/ | sed -n 's/\(.*\)\.sh$/\1/p'
+  register: csfpost_scripts
+- name: remove unreferenced csfpost scripts
+  file:
+    path: /etc/csf/csfpost.d/{{item}}.sh
+    state: absent
+  when: csf['scripts']['post'][item] is not defined
+  with_items: "{{csfpost_scripts.stdout_lines}}"
+  notify: csf_reload
+- name: create csfpost scripts in /etc/csf/csfpost.d
+  template:
+    src: csf_script.j2
+    dest: /etc/csf/csfpost.d/{{item.key}}.sh
+    owner: root
+    group: root
+    mode: 0700
+  with_dict: "{{csf.scripts.post}}"
+  notify: csf_reload

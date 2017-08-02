@@ -1,0 +1,4 @@
+packages:
+  - iptables
+  - libwww-perl
+  - tar

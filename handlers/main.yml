@@ -1,0 +1,24 @@
+---
+- name: csf_reload
+  command: csf -r
+  notify:
+    - csf_csfpre_check
+    - csf_csfpre_status
+    - csf_csfpost_check
+    - csf_csfpost_status
+- name: csf_csfpre_check
+  stat:
+    path: /etc/csf/status/csfpre
+  register: csfpre
+- name: csf_csfpre_status
+  fail:
+    msg: "csfpre scripts failed to run properly"
+  when: not csfpre.stat.exists
+- name: csf_csfpost_check
+  stat:
+    path: /etc/csf/status/csfpost
+  register: csfpost
+- name: csf_csfpost_status
+  fail:
+    msg: "csfpost scripts failed to run properly"
+  when: not csfpost.stat.exists
