@@ -6,8 +6,8 @@ Currently supports:
 - Modification of all config files in /etc/csf/*
 
 Additional Features:
-- Error catching for csfpre via a custom script that checks the exit value for all scripts run.
-- Error catching for csfpost via a custom script that checks the exit value for all scripts run.
+- Script blocks for csfpre/csfpost that can be used to categorize a feature or a set of commands run in the script.
+- Error catching for csfpre/csfpost via a custom script that checks the exit value for all scripts run.
 
 Future support:
 - Additional panels (cPanel/DirectAdmin)
