@@ -1,0 +1,45 @@
+csf:
+  enabled: True
+  conf:
+    TESTING: 0
+    TCP_IN: ""
+    UDP_IN: ""
+    TCP_OUT: 1:65535
+    UDP_OUT: 1:65535
+    ICMP_OUT: 1
+    ICMP_IN_RATE: 0
+    ICMP_OUT_RATE: 0
+    IPV6: 1
+    IPV6_ICMP_STRICT: 1
+    IPV6_SPI: 1
+    TCP6_IN: ""
+    UDP6_IN: ""
+    TCP6_OUT: 1:65535
+    UDP6_OUT: 1:65535
+  additional_conf:
+    allow:
+      ansible:
+        - tcp|in|d=22|s=192.168.22.4
+  scripts:
+    post: {}
+    pre:
+      dhcp:
+        - /sbin/iptables -A OUTPUT -o internal -p udp --dport 67:68 --sport 67:68 -j ACCEPT
+        - /sbin/iptables -A INPUT -i internal -p udp --dport 67:68 --sport 67:68 -j ACCEPT
+      routing-core:
+        - /sbin/iptables -A FORWARD -i america -o europe -d 10.2.1.0/24 -s 10.2.2.0/24 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i europe -o america -d 10.2.2.0/24 -s 10.2.1.0/24 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i america -o europe -d 10.2.1.0/24 -s 172.16.0.0/12 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i america -o europe -d 172.16.0.0/12 -s 10.2.1.0/24 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i america -o europe -d 172.16.0.0/12 -s 172.16.0.0/12 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i europe -o america -d 10.2.1.0/24 -s 172.16.0.0/12 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i europe -o america -d 172.16.0.0/12 -s 10.2.1.0/24 -j ACCEPT
+        - /sbin/iptables -A FORWARD -i europe -o america -d 172.16.0.0/12 -s 172.16.0.0/12 -j ACCEPT
+      remote-access:
+        - /sbin/iptables -A INPUT -p tcp -d 10.1.0.0/24 -s 10.2.0.0/24 -j ACCEPT
+      tinc-core:
+        - /sbin/iptables -A INPUT -p tcp --dport 1900 -j ACCEPT
+        - /sbin/iptables -A INPUT -p udp --dport 1900 -j ACCEPT
+      tinc-internal:
+        - /sbin/iptables -A INPUT -p tcp --dport 1901 -j ACCEPT
+        - /sbin/iptables -A INPUT -p udp --dport 1901 -j ACCEPT
