@@ -18,6 +18,7 @@ fi
 ## Run files in alphabetical order
 echo "Running csfpre rules"
 for file in $(ls -1 /etc/csf/csfpre.d/ | sort -V); do
+	chmod u+x /etc/csf/csfpre.d/${file}
         /etc/csf/csfpre.d/${file}
 done
 

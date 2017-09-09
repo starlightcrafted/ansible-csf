@@ -18,6 +18,7 @@ fi
 ## Run files in alphabetical order
 echo "Running csfpost rules"
 for file in $(ls -1 /etc/csf/csfpost.d/ | sort -V); do
+	chmod u+x /etc/csf/csfpost.d/${file}
 	/etc/csf/csfpost.d/${file}
 done
 
